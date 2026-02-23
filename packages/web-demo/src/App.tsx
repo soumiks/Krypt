@@ -24,6 +24,22 @@ function fromHexString(hexString: string) {
   );
 }
 
+// URL-safe base64 encoding/decoding
+function toBase64Url(str: string): string {
+  return btoa(unescape(encodeURIComponent(str)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function fromBase64Url(str: string): string {
+  // Restore standard base64
+  let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  // Add padding
+  while (b64.length % 4) b64 += '=';
+  return decodeURIComponent(escape(atob(b64)));
+}
+
 function App() {
   const [isReady, setIsReady] = useState(false);
   
@@ -122,7 +138,7 @@ function App() {
       };
       
       const json = JSON.stringify(payload);
-      const b64 = btoa(json);
+      const b64 = toBase64Url(json);
       const link = `${window.location.origin}${window.location.pathname}#share=${b64}`;
       setShareLink(link);
       
@@ -146,7 +162,7 @@ function App() {
         payloadStr = payloadStr.split('#share=')[1];
       }
       
-      const json = atob(payloadStr);
+      const json = fromBase64Url(payloadStr);
       const payload = JSON.parse(json);
       
       const keyBytes = fromHexString(payload.key);
@@ -202,7 +218,7 @@ function App() {
           <div className="section">
             <p><strong>Encrypted Chunk (Base64):</strong></p>
             <pre className="code-block">
-              {btoa(encryptedChunkData.ciphertext)}
+              {encryptedChunkData.ciphertext.slice(0, 64)}...
             </pre>
             <button onClick={shareWithVendor}>Share with Vendor</button>
           </div>

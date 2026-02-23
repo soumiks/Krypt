@@ -16,3 +16,6 @@ pub use biometric::{BiometricSeed, FuzzyExtractor, MasterKey};
 pub use chunk::{decrypt_chunk, encrypt_chunk, EncryptedChunk};
 pub use keys::{CategoryKey, ChunkKey, KeyHierarchy};
 pub use vendor::{generate_vendor_key, VendorAccessKey};
+
+#[cfg(target_arch = "wasm32")]
+pub mod wasm;

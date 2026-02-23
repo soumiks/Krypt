@@ -1,0 +1,16 @@
+{
+  "name": "krypt-crypto",
+  "description": "Cryptographic core for Krypt — biometric key derivation, chunk encryption, and vendor access",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "files": [
+    "krypt_crypto_bg.wasm",
+    "krypt_crypto.js",
+    "krypt_crypto.d.ts"
+  ],
+  "module": "krypt_crypto.js",
+  "types": "krypt_crypto.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

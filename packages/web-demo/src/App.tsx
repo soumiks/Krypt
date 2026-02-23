@@ -33,7 +33,7 @@ function App() {
   const [homeAddress, setHomeAddress] = useState('');
   const [encryptedChunkData, setEncryptedChunkData] = useState<{ nonce: string; ciphertext: string } | null>(null);
   const [shareLink, setShareLink] = useState('');
-  const [generatedVendorKey, setGeneratedVendorKey] = useState<VendorAccessKey | null>(null);
+  const [_generatedVendorKey, setGeneratedVendorKey] = useState<VendorAccessKey | null>(null);
   const [chunkKeyRef, setChunkKeyRef] = useState<ChunkKey | null>(null); // Keep ref to free later if needed
 
   // Vendor State

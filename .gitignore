@@ -1,0 +1,8 @@
+target/
+node_modules/
+dist/
+out/
+cache/
+*.swp
+*.swo
+.DS_Store

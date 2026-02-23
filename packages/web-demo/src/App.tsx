@@ -185,8 +185,8 @@ function App() {
       const encryptedChunk = new EncryptedChunk(nonce, ciphertext);
       
       // Use the chunk key to decrypt (in production, this would be proxy re-encryption)
-      const chunkKeyBytes = fromHexString(payload.chunk_key);
-      const vendorKey = VendorAccessKey.from_components(chunkKeyBytes, payload.vendor_id, payload.expires_at);
+      const chunkKeyBytes = fromHexString(payload.key);
+      const vendorKey = VendorAccessKey.from_components(chunkKeyBytes, payload.vendor_id, BigInt(payload.expires_at));
       
       const decryptedBytes = decrypt_vendor_chunk(vendorKey, encryptedChunk);
       const decoder = new TextDecoder();

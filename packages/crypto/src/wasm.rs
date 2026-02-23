@@ -71,6 +71,10 @@ impl JsChunkKey {
             .map_err(|e| JsValue::from_str(&e.to_string()))?;
         Ok(JsChunkKey(key))
     }
+
+    pub fn as_bytes(&self) -> Vec<u8> {
+        self.0.as_bytes().to_vec()
+    }
 }
 
 // --- Encrypted Chunk ---

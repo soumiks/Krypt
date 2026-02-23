@@ -103,6 +103,15 @@ export class ChunkKey {
         wasm.__wbg_chunkkey_free(ptr, 0);
     }
     /**
+     * @returns {Uint8Array}
+     */
+    as_bytes() {
+        const ret = wasm.chunkkey_as_bytes(this.__wbg_ptr);
+        var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+        wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+        return v1;
+    }
+    /**
      * @param {CategoryKey} category_key
      * @param {string} chunk_id
      * @returns {ChunkKey}

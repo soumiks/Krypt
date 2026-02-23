@@ -10,6 +10,7 @@ export const __wbg_vendoraccesskey_free: (a: number, b: number) => void;
 export const biometricseed_from_entropy: (a: number, b: number) => [number, number, number];
 export const biometricseed_new: (a: number, b: number) => [number, number, number];
 export const categorykey_derive: (a: number, b: number, c: number) => [number, number, number];
+export const chunkkey_as_bytes: (a: number) => [number, number];
 export const chunkkey_derive: (a: number, b: number, c: number) => [number, number, number];
 export const decrypt_chunk: (a: number, b: number) => [number, number, number, number];
 export const decrypt_vendor_chunk: (a: number, b: number) => [number, number, number, number];

@@ -120,19 +120,26 @@ function App() {
     if (!seedBytes || !encryptedChunkData) return;
     
     try {
-      // Re-derive keys
+      // Re-derive keys to decrypt, then re-encrypt with vendor key
       const seed = BiometricSeed.from_entropy(seedBytes);
       const masterKey = MasterKey.derive(seed);
       const categoryKey = CategoryKey.derive(masterKey, 'personal_data');
       const chunkKey = ChunkKey.derive(categoryKey, 'home_address');
 
+      // Generate a vendor key
       const expiresAt = Math.floor(Date.now() / 1000) + 3600; // 1 hour
       const vendorKey = generate_vendor_key(chunkKey, 'vendor-demo', BigInt(expiresAt));
+
+      // For the demo: share the chunk key so the vendor can decrypt directly.
+      // In production, this would use proxy re-encryption — the vendor would
+      // get a re-encryption key that transforms the ciphertext without exposing
+      // the original chunk key.
+      const chunkKeyBytes = chunkKey.as_bytes();
       
       const payload = {
-        key: toHexString(vendorKey.key),
+        key: toHexString(new Uint8Array(chunkKeyBytes)),
         vendor_id: vendorKey.vendor_id,
-        expires_at: Number(vendorKey.expires_at), // Convert BigInt to number for JSON
+        expires_at: Number(vendorKey.expires_at),
         nonce: encryptedChunkData.nonce,
         ciphertext: encryptedChunkData.ciphertext
       };
@@ -165,19 +172,28 @@ function App() {
       const json = fromBase64Url(payloadStr);
       const payload = JSON.parse(json);
       
-      const keyBytes = fromHexString(payload.key);
+      // Check expiry
+      const now = Math.floor(Date.now() / 1000);
+      if (now >= payload.expires_at) {
+        setVendorStatus('Access denied: this share link has expired.');
+        setDecryptedAddress('');
+        return;
+      }
+      
       const nonce = fromHexString(payload.nonce);
       const ciphertext = fromHexString(payload.ciphertext);
-      
-      const vendorKey = VendorAccessKey.from_components(keyBytes, payload.vendor_id, BigInt(payload.expires_at));
       const encryptedChunk = new EncryptedChunk(nonce, ciphertext);
+      
+      // Use the chunk key to decrypt (in production, this would be proxy re-encryption)
+      const chunkKeyBytes = fromHexString(payload.chunk_key);
+      const vendorKey = VendorAccessKey.from_components(chunkKeyBytes, payload.vendor_id, payload.expires_at);
       
       const decryptedBytes = decrypt_vendor_chunk(vendorKey, encryptedChunk);
       const decoder = new TextDecoder();
       setDecryptedAddress(decoder.decode(decryptedBytes));
       
       const expiry = new Date(payload.expires_at * 1000);
-      setVendorStatus(`Decryption successful! Valid until: ${expiry.toLocaleTimeString()}`);
+      setVendorStatus(`✅ Decrypted successfully! Access valid until: ${expiry.toLocaleTimeString()}`);
       
       vendorKey.free();
       encryptedChunk.free();

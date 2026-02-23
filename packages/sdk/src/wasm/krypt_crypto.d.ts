@@ -19,6 +19,7 @@ export class ChunkKey {
     private constructor();
     free(): void;
     [Symbol.dispose](): void;
+    as_bytes(): Uint8Array;
     static derive(category_key: CategoryKey, chunk_id: string): ChunkKey;
 }
 
@@ -72,6 +73,7 @@ export interface InitOutput {
     readonly biometricseed_from_entropy: (a: number, b: number) => [number, number, number];
     readonly biometricseed_new: (a: number, b: number) => [number, number, number];
     readonly categorykey_derive: (a: number, b: number, c: number) => [number, number, number];
+    readonly chunkkey_as_bytes: (a: number) => [number, number];
     readonly chunkkey_derive: (a: number, b: number, c: number) => [number, number, number];
     readonly decrypt_chunk: (a: number, b: number) => [number, number, number, number];
     readonly decrypt_vendor_chunk: (a: number, b: number) => [number, number, number, number];

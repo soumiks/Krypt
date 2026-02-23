@@ -67,7 +67,15 @@ pub fn decrypt_chunk(
     chunk_key: &ChunkKey,
     encrypted: &EncryptedChunk,
 ) -> Result<Vec<u8>, ChunkError> {
-    let cipher = Aes256Gcm::new_from_slice(chunk_key.as_bytes())
+    decrypt_with_key(chunk_key.as_bytes(), encrypted)
+}
+
+/// Decrypt an encrypted data chunk with a raw AES-256-GCM key.
+pub fn decrypt_with_key(
+    key_bytes: &[u8; 32],
+    encrypted: &EncryptedChunk,
+) -> Result<Vec<u8>, ChunkError> {
+    let cipher = Aes256Gcm::new_from_slice(key_bytes)
         .map_err(|_| ChunkError::DecryptionFailed)?;
 
     let nonce = Nonce::from_exact_iter(encrypted.nonce.iter().copied())

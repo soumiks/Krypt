@@ -1,7 +1,8 @@
 use wasm_bindgen::prelude::*;
 use crate::biometric::{BiometricSeed, MasterKey};
 use crate::keys::{CategoryKey, ChunkKey};
-use crate::chunk::{encrypt_chunk as core_encrypt, decrypt_chunk as core_decrypt, EncryptedChunk};
+use crate::chunk::{encrypt_chunk as core_encrypt, decrypt_chunk as core_decrypt, decrypt_with_key, EncryptedChunk};
+use crate::vendor::{generate_vendor_key as core_generate_vendor_key, VendorAccessKey};
 
 // --- Biometric Seed ---
 
@@ -98,6 +99,60 @@ impl JsEncryptedChunk {
     }
 }
 
+// --- Vendor Access Key ---
+
+#[wasm_bindgen(js_name = VendorAccessKey)]
+pub struct JsVendorAccessKey(VendorAccessKey);
+
+#[wasm_bindgen(js_class = VendorAccessKey)]
+impl JsVendorAccessKey {
+    #[wasm_bindgen(getter)]
+    pub fn key(&self) -> Vec<u8> {
+        self.0.key.to_vec()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn vendor_id(&self) -> String {
+        self.0.vendor_id.clone()
+    }
+    
+    #[wasm_bindgen(getter)]
+    pub fn expires_at(&self) -> u64 {
+        self.0.expires_at
+    }
+
+    pub fn is_expired(&self, current_time: u64) -> bool {
+        self.0.is_expired(current_time)
+    }
+
+    /// Reconstruct a vendor key from its components (for the recipient).
+    #[wasm_bindgen]
+    pub fn from_components(key_bytes: &[u8], vendor_id: &str, expires_at: u64) -> Result<JsVendorAccessKey, JsValue> {
+        if key_bytes.len() != 32 {
+            return Err(JsValue::from_str("Vendor key must be exactly 32 bytes"));
+        }
+        let mut key = [0u8; 32];
+        key.copy_from_slice(key_bytes);
+        
+        Ok(JsVendorAccessKey(VendorAccessKey {
+            key,
+            vendor_id: vendor_id.to_string(),
+            expires_at
+        }))
+    }
+}
+
+#[wasm_bindgen]
+pub fn generate_vendor_key(
+    chunk_key: &JsChunkKey,
+    vendor_id: &str,
+    expires_at: u64,
+) -> Result<JsVendorAccessKey, JsValue> {
+    let key = core_generate_vendor_key(&chunk_key.0, vendor_id, expires_at)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+    Ok(JsVendorAccessKey(key))
+}
+
 // --- Core Functions ---
 
 #[wasm_bindgen]
@@ -125,6 +180,22 @@ pub fn decrypt_chunk(
     };
 
     let plaintext = core_decrypt(&chunk_key.0, &core_encrypted)
+        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    Ok(plaintext)
+}
+
+#[wasm_bindgen]
+pub fn decrypt_vendor_chunk(
+    vendor_key: &JsVendorAccessKey,
+    encrypted_chunk: &JsEncryptedChunk
+) -> Result<Vec<u8>, JsValue> {
+    let core_encrypted = EncryptedChunk {
+        nonce: encrypted_chunk.nonce.clone(),
+        ciphertext: encrypted_chunk.ciphertext.clone(),
+    };
+
+    let plaintext = decrypt_with_key(&vendor_key.0.key, &core_encrypted)
         .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
     Ok(plaintext)
